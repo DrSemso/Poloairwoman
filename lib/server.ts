@@ -1,22 +1,20 @@
 import "server-only";
 
-const SB_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SB_URL = process.env.SUPABASE_URL;
+const SB_KEY = process.env.SUPABASE_ANON_KEY;
+const SECRET = process.env.SERVER_SECRET;
 
-export const hasDb = !!(SB_URL && SB_KEY);
+export const hasDb = !!(SB_URL && SB_KEY && SECRET);
 export const hasMail = !!process.env.RESEND_API_KEY;
 
-export async function dbInsert(table: string, row: Record<string, unknown>) {
+/** Poziva zaštićenu Supabase funkciju (radi samo sa serverskim tajnim ključem). */
+export async function dbRpc(fn: string, args: Record<string, unknown>) {
   if (!hasDb) throw new Error("db-not-configured");
-  const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
+  const r = await fetch(`${SB_URL}/rest/v1/rpc/${fn}`, {
     method: "POST",
-    headers: {
-      apikey: SB_KEY!,
-      Authorization: `Bearer ${SB_KEY}`,
-      "Content-Type": "application/json",
-      Prefer: "return=minimal,resolution=ignore-duplicates",
-    },
-    body: JSON.stringify(row),
+    headers: { apikey: SB_KEY!, Authorization: `Bearer ${SB_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ secret: SECRET, ...args }),
+    cache: "no-store",
   });
   if (!r.ok) throw new Error(`db ${r.status}: ${await r.text()}`);
 }

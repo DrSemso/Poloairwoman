@@ -16,7 +16,7 @@ npm run dev
 
 ## Porudžbine (plaćanje samo pouzećem)
 `app/api/order` računa cene na serveru i porudžbinu:
-- upisuje u Supabase tabelu `orders` (ako su postavljeni `SUPABASE_URL` i `SUPABASE_SERVICE_ROLE_KEY`),
+- upisuje u Supabase tabelu `orders` preko funkcije `place_order` (env: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SERVER_SECRET`; tajni ključ je i u tabeli `private.config`),
 - šalje email adminima preko Resend-a (`RESEND_API_KEY`, `MAIL_FROM`, `ADMIN_EMAILS`).
 Bez ijednog od ta dva u produkciji, forma kupcu kaže da poruči telefonom.
 

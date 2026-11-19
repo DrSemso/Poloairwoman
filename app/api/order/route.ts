@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getProduct } from "@/lib/products";
 import { SITE } from "@/lib/site";
 import { rsd } from "@/lib/format";
-import { adminEmails, dbInsert, esc, hasDb, hasMail, sendMail } from "@/lib/server";
+import { adminEmails, dbRpc, esc, hasDb, hasMail, sendMail } from "@/lib/server";
 
 type Body = {
   customer?: Record<string, string>;
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
   let saved = false;
   if (hasDb) {
     try {
-      await dbInsert("orders", { number, customer, items, subtotal, shipping, total, status: "nova" });
+      await dbRpc("place_order", { o: { number, customer, items, subtotal, shipping, total } });
       saved = true;
     } catch (e) {
       console.error("order db", e);

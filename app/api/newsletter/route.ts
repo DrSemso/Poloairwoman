@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { dbInsert, hasDb } from "@/lib/server";
+import { dbRpc, hasDb } from "@/lib/server";
 
 export async function POST(req: Request) {
   const { email } = (await req.json().catch(() => ({}))) as { email?: string };
@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Prijava trenutno nije dostupna." }, { status: 503 });
   }
   try {
-    await dbInsert("subscribers", { email: e });
+    await dbRpc("subscribe", { email: e });
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("newsletter", err);
