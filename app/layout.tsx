@@ -31,6 +31,7 @@ export const metadata: Metadata = {
     "Ženski satovi, setovi sat i narukvica, premium poklon setovi, naočare i novčanici. Slanje u roku od 24h, plaćanje pouzećem, 14 dana za zamenu ili povrat.",
   openGraph: { siteName: "Poloair Woman", locale: "sr_RS", type: "website", images: ["/brand/hero.webp"] },
   alternates: { canonical: "/" },
+  robots: process.env.NEXT_PUBLIC_NOINDEX === "1" ? { index: false, follow: false } : undefined,
 };
 
 export const viewport: Viewport = { themeColor: "#ffffff", width: "device-width", initialScale: 1 };
