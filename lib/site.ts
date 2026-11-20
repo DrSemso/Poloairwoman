@@ -8,9 +8,9 @@ export const SITE = {
   instagram: "https://www.instagram.com/poloairwoman/",
   instagramHandle: "@poloairwoman",
   /** Cena dostave ispod praga za besplatnu dostavu (RSD). */
-  shippingPrice: 300,
+  shippingPrice: 400,
   /** Prag za besplatnu dostavu (RSD). */
-  freeShippingFrom: 4000,
+  freeShippingFrom: 5500,
   courier: "Post Express",
 };
 
