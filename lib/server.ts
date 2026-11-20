@@ -5,7 +5,9 @@ const SB_KEY = process.env.SUPABASE_ANON_KEY;
 const SECRET = process.env.SERVER_SECRET;
 
 export const hasDb = !!(SB_URL && SB_KEY && SECRET);
-export const hasMail = !!process.env.RESEND_API_KEY;
+// Vercel ključ je unet malim slovima; prihvatamo oba oblika
+const RESEND_KEY = process.env.RESEND_API_KEY || process.env.resend_api_key || "";
+export const hasMail = !!RESEND_KEY;
 
 /** Poziva zaštićenu Supabase funkciju (radi samo sa serverskim tajnim ključem). */
 export async function dbRpc(fn: string, args: Record<string, unknown>) {
@@ -30,7 +32,7 @@ export async function sendMail(to: string[], subject: string, html: string, repl
   if (!hasMail || !to.length) return false;
   const r = await fetch("https://api.resend.com/emails", {
     method: "POST",
-    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       from: process.env.MAIL_FROM || "Poloair Woman <narudzbe@poloairwoman.rs>",
       to,
