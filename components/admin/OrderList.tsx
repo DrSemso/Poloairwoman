@@ -15,9 +15,9 @@ export default function OrderList({ orders }: { orders: OrderRow[] }) {
         <thead>
           <tr>
             <th>Broj</th>
-            <th>Datum</th>
+            <th className="hide-m">Datum</th>
             <th>Kupac</th>
-            <th>Grad</th>
+            <th className="hide-m">Grad</th>
             <th className="r">Iznos</th>
             <th>Status</th>
           </tr>
@@ -29,13 +29,15 @@ export default function OrderList({ orders }: { orders: OrderRow[] }) {
                 <Link href={`/admin/porudzbine/${o.id}`} className="adm-link">
                   {o.number}
                 </Link>
+                <small className="show-m">{dateTime(o.created_at)}</small>
               </td>
-              <td className="nowrap">{dateTime(o.created_at)}</td>
+              <td className="nowrap hide-m">{dateTime(o.created_at)}</td>
               <td>
                 {o.customer?.name}
                 <small>{o.customer?.phone}</small>
+                <small className="show-m">{o.customer?.city}</small>
               </td>
-              <td>{o.customer?.city}</td>
+              <td className="hide-m">{o.customer?.city}</td>
               <td className="r nowrap">{rsd(o.total)}</td>
               <td>
                 <StatusPill status={o.status} />

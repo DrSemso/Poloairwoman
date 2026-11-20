@@ -569,6 +569,7 @@ a.adm-card:hover { border-color: var(--ink); }
 .adm-table.flat td + td { padding-left: 14px; }
 .adm-table tr.total td { font-weight: 500; border-top: 1px solid var(--ink); font-size: 15px; }
 .nowrap { white-space: nowrap; }
+.adm-table .show-m { display: none; }
 .adm-empty { background: #fff; border: 1px dashed var(--line); padding: 40px; text-align: center; color: var(--ink-soft); border-radius: 4px; }
 
 .adm-pill { display: inline-block; font-size: 11.5px; letter-spacing: .8px; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; font-weight: 500; border: 1px solid transparent; background: #f1efec; color: #555; white-space: nowrap; }
@@ -657,7 +658,11 @@ a.adm-card:hover { border-color: var(--ink); }
   .adm-thumb img { width: 56px; height: 56px; }
   .adm-toggles { grid-column: 1 / -1; justify-content: flex-start; }
   .adm-cards { grid-template-columns: 1fr 1fr; }
-  .adm-card b { font-size: 24px; }
   .adm-box { padding: 18px; }
   .adm-table table { font-size: 13.5px; }
+  .adm-table .hide-m { display: none; }
+  .adm-table .show-m { display: block; }
+  .adm-table th, .adm-table td { padding: 11px 10px; }
+  .adm-table td:first-child a { white-space: nowrap; }
+  .adm-card b { font-size: 21px; }
 }
