@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getProduct } from "@/lib/products";
+import { getCatalog } from "@/lib/catalog";
+import { createSupabasePublic, hasSupabase } from "@/lib/supabase";
 import { SITE } from "@/lib/site";
 import { rsd } from "@/lib/format";
 import { adminEmails, dbRpc, esc, hasDb, hasMail, sendMail } from "@/lib/server";
@@ -33,11 +34,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Proveri podatke za dostavu." }, { status: 400 });
   }
 
-  // Cene se uvek računaju na serveru, iz kataloga — ne verujemo korpi iz browsera.
-  const items = (body.items || [])
-    .slice(0, 50)
+  // Cene i zalihe se uvek proveravaju na serveru, sveže iz baze — ne verujemo korpi iz browsera.
+  const wanted = (body.items || []).slice(0, 50);
+  const slugs = wanted.map((i) => String(i.slug));
+  let live: { slug: string; name: string; price: number; in_stock: boolean }[] = [];
+  if (hasSupabase) {
+    const { data } = await createSupabasePublic().from("products").select("slug,name,price,in_stock").in("slug", slugs).eq("active", true);
+    live = data || [];
+  }
+  if (!live.length) live = (await getCatalog()).filter((p) => slugs.includes(p.slug)).map((p) => ({ slug: p.slug, name: p.name, price: p.price, in_stock: p.inStock }));
+  const soldOut = live.filter((p) => !p.in_stock).map((p) => p.name);
+  if (soldOut.length) return NextResponse.json({ error: `Nažalost, rasprodato: ${soldOut.join(", ")}. Ukloni iz korpe pa poruči ponovo.` }, { status: 409 });
+  const items = wanted
     .map((i) => {
-      const p = getProduct(String(i.slug));
+      const p = live.find((x) => x.slug === String(i.slug));
       const qty = Math.max(1, Math.min(20, Math.floor(Number(i.qty) || 1)));
       return p ? { slug: p.slug, name: p.name, price: p.price, qty, total: p.price * qty } : null;
     })

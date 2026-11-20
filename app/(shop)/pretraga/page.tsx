@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { search } from "@/lib/products";
+import { getCatalog } from "@/lib/catalog";
 import { ProductGrid } from "@/components/Sections";
 
 export const metadata: Metadata = { title: "Pretraga", robots: { index: false } };
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q = "" } = await searchParams;
-  const results = search(q).slice(0, 60);
+  const results = search(await getCatalog(), q).slice(0, 60);
   return (
     <>
       <section className="cat-hero">

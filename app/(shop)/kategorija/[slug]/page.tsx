@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { getCatalog } from "@/lib/catalog";
 import { getCategory, productsIn, sortProducts, SORTS, type SortKey } from "@/lib/products";
 import { CATEGORIES, COLLECTIONS, FAQ_GENERAL, MENU } from "@/lib/site";
 import { Faq, FinalCta, NewsletterSection, ProductGrid, TrustLine } from "@/components/Sections";
@@ -41,7 +42,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   if (!c) notFound();
 
   const sort = (SORTS.some((s) => s.key === sp.sort) ? sp.sort : "popularno") as SortKey;
-  const all = sortProducts(productsIn(slug), slug === "novo" ? "najnovije" : sort);
+  const catalog = await getCatalog();
+  const all = sortProducts(productsIn(catalog, slug), slug === "novo" ? "najnovije" : sort);
   const pages = Math.max(1, Math.ceil(all.length / PER_PAGE));
   const page = Math.min(pages, Math.max(1, parseInt(sp.strana || "1", 10) || 1));
   const items = all.slice((page - 1) * PER_PAGE, page * PER_PAGE);

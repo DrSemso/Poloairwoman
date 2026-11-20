@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CATEGORIES, HELP_LINKS, SITE } from "@/lib/site";
-import { type Product, discountPct, isNew } from "@/lib/products";
+import { type Product, discountPct } from "@/lib/products";
 import { rsd } from "@/lib/format";
 import { IconCash, IconGift, IconInstagram, IconMail, IconPhone, IconReturn, IconTruck } from "./Icons";
 import Newsletter from "./Newsletter";
@@ -14,7 +14,8 @@ export function ProductCard({ p, priority }: { p: Product; priority?: boolean })
         {p.images[1] && <img className="alt" src={p.images[1]} alt="" loading="lazy" width={600} height={600} />}
         <div className="pbadges">
           {pct > 0 && <span className="pbadge sale">−{pct}%</span>}
-          {isNew(p) && <span className="pbadge">Novo</span>}
+          {p.isNew && <span className="pbadge">Novo</span>}
+          {!p.inStock && <span className="pbadge" style={{ background: "#707070" }}>Rasprodato</span>}
         </div>
       </div>
       <h3>

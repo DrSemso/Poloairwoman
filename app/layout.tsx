@@ -1,11 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Poppins } from "next/font/google";
 import "./globals.css";
-import { CartProvider } from "@/components/CartProvider";
-import Header from "@/components/Header";
-import CartDrawer, { type Suggestion } from "@/components/CartDrawer";
-import { Footer } from "@/components/Sections";
-import { PRODUCTS } from "@/lib/products";
 import { SITE } from "@/lib/site";
 
 const serif = Cormorant_Garamond({
@@ -36,12 +31,6 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: "#ffffff", width: "device-width", initialScale: 1 };
 
-// Predlozi za "Dodaj i ovo" u korpi: pristupačni komadi iz drugih kategorija
-const suggestions: Suggestion[] = PRODUCTS.filter((p) => ["narukvice", "novcanici", "naocare"].includes(p.category))
-  .sort((a, b) => a.price - b.price)
-  .slice(0, 6)
-  .map((p) => ({ slug: p.slug, name: p.name, price: p.price, regularPrice: p.regularPrice, image: p.images[0] }));
-
 const orgJsonLd = {
   "@context": "https://schema.org",
   "@type": "OnlineStore",
@@ -63,12 +52,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="sr-Latn-RS" className={`${serif.variable} ${sans.variable}`}>
       <body>
-        <CartProvider>
-          <Header />
-          <main>{children}</main>
-          <Footer />
-          <CartDrawer suggestions={suggestions} />
-        </CartProvider>
+        {children}
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
       </body>
     </html>

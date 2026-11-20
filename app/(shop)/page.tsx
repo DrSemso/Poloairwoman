@@ -1,20 +1,25 @@
 import Link from "next/link";
-import { PRODUCTS, productsIn, sortProducts } from "@/lib/products";
+import { productsIn, sortProducts } from "@/lib/products";
+import { getCatalog } from "@/lib/catalog";
 import { CATEGORIES, FAQ_GENERAL } from "@/lib/site";
 import { Faq, FinalCta, InstagramSection, NewsletterSection, ProductGrid } from "@/components/Sections";
 import { IconDrop, IconGift, IconReturn, IconSparkle, IconTruck } from "@/components/Icons";
 
-export default function Home() {
-  const favorites = [
-    ...sortProducts(productsIn("pokloni"), "popularno").slice(0, 2),
-    sortProducts(productsIn("setovi"), "popularno")[0],
-    productsIn("satovi")[6] ?? productsIn("satovi")[0],
-  ];
-  const newest = PRODUCTS.filter((p) => !favorites.includes(p)).slice(0, 8);
+export const revalidate = 600;
+
+export default async function Home() {
+  const all = await getCatalog();
+  const featured = all.filter((p) => p.featured && p.inStock);
+  const favorites = featured.length >= 4 ? sortProducts(featured, "popularno").slice(0, 4) : [
+    ...sortProducts(productsIn(all, "pokloni"), "popularno").slice(0, 2),
+    sortProducts(productsIn(all, "setovi"), "popularno")[0],
+    productsIn(all, "satovi")[6] ?? productsIn(all, "satovi")[0],
+  ].filter(Boolean);
+  const newest = sortProducts(all.filter((p) => !favorites.includes(p) && p.inStock), "najnovije").slice(0, 8);
   // Koji proizvod predstavlja kategoriju na pločici (indeks u listi kategorije)
   const TILE: Record<string, number> = { satovi: 6, novcanici: 1 };
   const tiles = CATEGORIES.map((c) => {
-    const list = productsIn(c.slug);
+    const list = productsIn(all, c.slug);
     return { c, img: (list[TILE[c.slug] ?? 0] ?? list[0])?.images[0], n: list.length };
   }).filter((t) => t.img);
 

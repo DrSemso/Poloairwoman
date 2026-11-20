@@ -1,10 +1,9 @@
-import raw from "@/data/products.json";
 import { CATEGORIES, COLLECTIONS, type Category } from "./site";
 
 export type Product = {
   id: number;
   slug: string;
-  oldSlug: string;
+  oldSlug?: string | null;
   name: string;
   category: string;
   price: number;
@@ -12,37 +11,37 @@ export type Product = {
   images: string[];
   description: string;
   summary: string;
-  rank: number; // 0 = najnoviji
-  whiteCover: boolean; // naslovna slika je na beloj pozadini
+  rank: number; // manji = noviji
+  whiteCover?: boolean;
+  inStock: boolean;
+  featured: boolean;
+  isNew?: boolean;
 };
-
-export const PRODUCTS = raw as Product[];
 
 /** Koliko najnovijih proizvoda nosi oznaku "Novo". */
 const NEW_COUNT = 24;
 
-export function isNew(p: Product) {
-  return p.rank < NEW_COUNT;
+export function newIds(all: Product[]) {
+  return new Set([...all].sort((a, b) => a.rank - b.rank).slice(0, NEW_COUNT).map((p) => p.id));
 }
 
 export function discountPct(p: Product) {
-  if (!p.regularPrice) return 0;
+  if (!p.regularPrice || p.regularPrice <= p.price) return 0;
   return Math.round((1 - p.price / p.regularPrice) * 100);
-}
-
-export function getProduct(slug: string) {
-  return PRODUCTS.find((p) => p.slug === slug);
 }
 
 export function getCategory(slug: string): Category | undefined {
   return [...CATEGORIES, ...COLLECTIONS].find((c) => c.slug === slug);
 }
 
-export function productsIn(slug: string): Product[] {
-  if (slug === "novo") return PRODUCTS.filter(isNew);
-  if (slug === "akcije") return PRODUCTS.filter((p) => p.regularPrice);
-  if (slug === "svi-proizvodi") return PRODUCTS;
-  return PRODUCTS.filter((p) => p.category === slug);
+export function productsIn(all: Product[], slug: string): Product[] {
+  if (slug === "novo") {
+    const ids = newIds(all);
+    return all.filter((p) => ids.has(p.id));
+  }
+  if (slug === "akcije") return all.filter((p) => discountPct(p) > 0);
+  if (slug === "svi-proizvodi") return all;
+  return all.filter((p) => p.category === slug);
 }
 
 export type SortKey = "popularno" | "cena-rastuce" | "cena-opadajuce" | "najnovije";
@@ -64,37 +63,48 @@ export function sortProducts(list: Product[], sort: SortKey) {
     case "najnovije":
       return l.sort((a, b) => a.rank - b.rank);
     default:
-      // "Izdvajamo": snižene i premium setovi prvo, pa najnoviji
+      // "Izdvajamo": na stanju, izdvojeni, slika na beloj pozadini, sniženi — pa najnoviji
       return l.sort((a, b) => score(b) - score(a) || a.rank - b.rank);
   }
 }
 
 function score(p: Product) {
-  return (p.whiteCover ? 4 : 0) + (p.regularPrice ? 2 : 0) + (p.images.length >= 4 ? 1 : 0);
+  return (p.inStock ? 16 : 0) + (p.featured ? 8 : 0) + (p.whiteCover !== false ? 4 : 0) + (p.regularPrice ? 2 : 0) + (p.images.length >= 4 ? 1 : 0);
 }
 
-export function related(p: Product, n = 4): Product[] {
-  const same = PRODUCTS.filter((x) => x.category === p.category && x.id !== p.id);
-  // Stabilan, ali raznovrstan izbor: najbliži po ceni
+export function related(all: Product[], p: Product, n = 4): Product[] {
+  const same = all.filter((x) => x.category === p.category && x.id !== p.id && x.inStock);
   same.sort((a, b) => Math.abs(a.price - p.price) - Math.abs(b.price - p.price) || a.rank - b.rank);
   const out = same.slice(0, n - 1);
   const pair: Record<string, string> = { satovi: "pokloni", setovi: "pokloni", pokloni: "setovi", narukvice: "satovi", torbice: "novcanici", novcanici: "torbice", naocare: "torbice" };
-  const extra = PRODUCTS.find((x) => x.category === pair[p.category] && !out.includes(x));
+  const extra = all.find((x) => x.category === pair[p.category] && x.inStock && !out.includes(x));
   if (extra) out.push(extra);
   return out.slice(0, n);
 }
 
-export function search(q: string): Product[] {
-  const norm = (s: string) =>
-    s
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .replace(/đ/g, "dj");
+export function norm(s: string) {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/đ/g, "dj");
+}
+
+export function search(all: Product[], q: string): Product[] {
   const terms = norm(q).split(/\s+/).filter(Boolean);
   if (!terms.length) return [];
-  return PRODUCTS.filter((p) => {
+  return all.filter((p) => {
     const hay = norm(`${p.name} ${p.category} ${p.summary}`);
     return terms.every((t) => hay.includes(t));
   });
+}
+
+export function summaryOf(html: string) {
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 220);
 }

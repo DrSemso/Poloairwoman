@@ -1,9 +1,12 @@
 import type { MetadataRoute } from "next";
-import { PRODUCTS } from "@/lib/products";
+import { getCatalog } from "@/lib/catalog";
 import { CATEGORIES, COLLECTIONS, SITE } from "@/lib/site";
 import { PAGES } from "@/lib/pages";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const revalidate = 3600;
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const PRODUCTS = await getCatalog();
   const u = (p: string) => `${SITE.url}${p}`;
   return [
     { url: u("/"), changeFrequency: "daily", priority: 1 },

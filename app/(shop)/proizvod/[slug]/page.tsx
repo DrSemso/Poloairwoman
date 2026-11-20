@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { PRODUCTS, discountPct, getCategory, getProduct, related } from "@/lib/products";
+import { discountPct, getCategory, related } from "@/lib/products";
+import { getCatalog, getProductBySlug } from "@/lib/catalog";
 import { FAQ_GENERAL, SITE } from "@/lib/site";
 import { rsd } from "@/lib/format";
 import Gallery from "@/components/Gallery";
@@ -11,13 +12,15 @@ import { IconCash, IconDrop, IconGift, IconReturn, IconShield, IconSparkle, Icon
 
 type Props = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return PRODUCTS.map((p) => ({ slug: p.slug }));
+export const revalidate = 600;
+
+export async function generateStaticParams() {
+  return (await getCatalog()).map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const p = getProduct(slug);
+  const p = await getProductBySlug(slug);
   if (!p) return {};
   return {
     title: p.name,
@@ -31,7 +34,7 @@ const JEWELRY = ["satovi", "setovi", "pokloni", "narukvice"];
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
-  const p = getProduct(slug);
+  const p = await getProductBySlug(slug);
   if (!p) notFound();
   const cat = getCategory(p.category)!;
   const pct = discountPct(p);
@@ -64,7 +67,7 @@ export default async function ProductPage({ params }: Props) {
         url: `${SITE.url}/proizvod/${p.slug}`,
         priceCurrency: "RSD",
         price: p.price,
-        availability: "https://schema.org/InStock",
+        availability: p.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
         itemCondition: "https://schema.org/NewCondition",
         seller: { "@type": "Organization", name: "Poloair Woman" },
       },
@@ -102,7 +105,7 @@ export default async function ProductPage({ params }: Props) {
             </div>
             <p className="vat">Cena sa PDV-om</p>
             {p.summary && <p className="sub">{p.summary.length > 200 ? `${p.summary.slice(0, p.summary.lastIndexOf(" ", 200))}…` : p.summary}</p>}
-            <BuyBox item={item} />
+            {p.inStock ? <BuyBox item={item} /> : <p className="form-err">Ovaj model je trenutno rasprodat. Pozovi nas ili piši na Viber da proverimo kada stiže.</p>}
             <div className="b-trust">
               <span>
                 <IconTruck /> Slanje u roku od 24h · stiže za 1–2 radna dana
@@ -219,7 +222,7 @@ export default async function ProductPage({ params }: Props) {
             <span className="eyebrow">Savršen par</span>
             <h2>Možda će ti se dopasti i</h2>
           </div>
-          <ProductGrid products={related(p)} />
+          <ProductGrid products={related(await getCatalog(), p)} />
         </div>
       </section>
 
@@ -240,7 +243,7 @@ export default async function ProductPage({ params }: Props) {
               <IconGift /> Stiže u poklon-kutiji
             </span>
           </div>
-          <AddButton item={item} />
+          {p.inStock ? <AddButton item={item} /> : <Link href={`/kategorija/${cat.slug}`} className="btn btn-light">Pogledaj slične modele</Link>}
         </div>
       </section>
       <NewsletterSection />
