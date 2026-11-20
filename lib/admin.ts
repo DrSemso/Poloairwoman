@@ -51,6 +51,8 @@ export type ProductRow = {
   active: boolean;
   in_stock: boolean;
   featured: boolean;
+  track_stock: boolean;
+  stock: number | null;
   rank: number;
   updated_at: string;
 };

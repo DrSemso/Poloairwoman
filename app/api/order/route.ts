@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getCatalog } from "@/lib/catalog";
+import { revalidateTag } from "next/cache";
+import { CATALOG_TAG, getCatalog } from "@/lib/catalog";
 import { createSupabasePublic, hasSupabase } from "@/lib/supabase";
 import { SITE } from "@/lib/site";
 import { rsd } from "@/lib/format";
@@ -37,9 +38,9 @@ export async function POST(req: Request) {
   // Cene i zalihe se uvek proveravaju na serveru, sveže iz baze — ne verujemo korpi iz browsera.
   const wanted = (body.items || []).slice(0, 50);
   const slugs = wanted.map((i) => String(i.slug));
-  let live: { slug: string; name: string; price: number; in_stock: boolean }[] = [];
+  let live: { slug: string; name: string; price: number; in_stock: boolean; track_stock?: boolean; stock?: number | null }[] = [];
   if (hasSupabase) {
-    const { data } = await createSupabasePublic().from("products").select("slug,name,price,in_stock").in("slug", slugs).eq("active", true);
+    const { data } = await createSupabasePublic().from("products").select("slug,name,price,in_stock,track_stock,stock").in("slug", slugs).eq("active", true);
     live = data || [];
   }
   if (!live.length) live = (await getCatalog()).filter((p) => slugs.includes(p.slug)).map((p) => ({ slug: p.slug, name: p.name, price: p.price, in_stock: p.inStock }));
@@ -53,6 +54,14 @@ export async function POST(req: Request) {
     })
     .filter((x): x is NonNullable<typeof x> => !!x);
   if (!items.length) return NextResponse.json({ error: "Korpa je prazna." }, { status: 400 });
+  const short = items.filter((i) => {
+    const p = live.find((x) => x.slug === i.slug);
+    return p?.track_stock && i.qty > (p.stock ?? 0);
+  });
+  if (short.length) {
+    const msg = short.map((i) => `${i.name} (na stanju: ${live.find((x) => x.slug === i.slug)?.stock ?? 0})`).join(", ");
+    return NextResponse.json({ error: `Nema dovoljno na stanju: ${msg}. Smanji količinu pa poruči ponovo.` }, { status: 409 });
+  }
 
   const subtotal = items.reduce((s, i) => s + i.total, 0);
   const shipping = subtotal >= SITE.freeShippingFrom ? 0 : SITE.shippingPrice;
@@ -77,7 +86,10 @@ export async function POST(req: Request) {
     try {
       await dbRpc("place_order", { o: { number, customer, items, subtotal, shipping, total } });
       saved = true;
+      revalidateTag(CATALOG_TAG); // zalihe su se promenile
     } catch (e) {
+      const m = String(e).match(/out_of_stock:([^:"]+):(\d+)/);
+      if (m) return NextResponse.json({ error: `Nema dovoljno na stanju: ${m[1]} (na stanju: ${m[2]}). Smanji količinu pa poruči ponovo.` }, { status: 409 });
       console.error("order db", e);
     }
   }

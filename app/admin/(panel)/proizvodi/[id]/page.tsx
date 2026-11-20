@@ -44,6 +44,8 @@ export default async function ProductEdit({ params, searchParams }: { params: Pr
                 active: p.active,
                 inStock: p.in_stock,
                 featured: p.featured,
+                trackStock: p.track_stock,
+                stock: p.stock,
               }
             : null
         }

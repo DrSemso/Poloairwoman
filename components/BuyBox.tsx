@@ -6,7 +6,7 @@ import { rsd } from "@/lib/format";
 import { SITE } from "@/lib/site";
 import { IconLock, IconTruck } from "./Icons";
 
-type Item = { slug: string; name: string; price: number; regularPrice: number | null; image: string };
+type Item = { slug: string; name: string; price: number; regularPrice: number | null; image: string; max?: number | null };
 
 export default function BuyBox({ item }: { item: Item }) {
   const { add } = useCart();
@@ -38,13 +38,16 @@ export default function BuyBox({ item }: { item: Item }) {
           </span>
         )}
       </p>
+      {item.max != null && item.max <= 5 && (
+        <p className="stock-left">{item.max === 1 ? "Poslednji komad na stanju" : `Još samo ${item.max} komada na stanju`}</p>
+      )}
       <div className="qty-row" ref={ctaRef}>
         <div className="qty">
           <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Smanji količinu">
             −
           </button>
           <span aria-live="polite">{qty}</span>
-          <button onClick={() => setQty((q) => Math.min(20, q + 1))} aria-label="Povećaj količinu">
+          <button onClick={() => setQty((q) => Math.min(item.max ?? 20, 20, q + 1))} aria-label="Povećaj količinu">
             +
           </button>
         </div>

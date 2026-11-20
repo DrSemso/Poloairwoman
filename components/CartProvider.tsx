@@ -9,6 +9,8 @@ export type CartLine = {
   regularPrice: number | null;
   image: string;
   qty: number;
+  /** Najviše komada (zalihe); bez vrednosti = 20. */
+  max?: number | null;
 };
 
 type CartCtx = {
@@ -23,6 +25,8 @@ type CartCtx = {
   remove: (slug: string) => void;
   clear: () => void;
 };
+
+const cap = (l: { max?: number | null }) => Math.max(1, Math.min(20, l.max ?? 20));
 
 const Ctx = createContext<CartCtx | null>(null);
 const KEY = "paw-cart-v1";
@@ -54,14 +58,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const add = useCallback<CartCtx["add"]>((line, qty = 1, openDrawer = true) => {
     setLines((ls) => {
       const ex = ls.find((l) => l.slug === line.slug);
-      if (ex) return ls.map((l) => (l.slug === line.slug ? { ...l, ...line, qty: Math.min(l.qty + qty, 20) } : l));
-      return [...ls, { ...line, qty }];
+      if (ex) return ls.map((l) => (l.slug === line.slug ? { ...l, ...line, qty: Math.min(l.qty + qty, cap(line)) } : l));
+      return [...ls, { ...line, qty: Math.min(qty, cap(line)) }];
     });
     if (openDrawer) setOpen(true);
   }, []);
 
   const setQty = useCallback((slug: string, qty: number) => {
-    setLines((ls) => (qty <= 0 ? ls.filter((l) => l.slug !== slug) : ls.map((l) => (l.slug === slug ? { ...l, qty: Math.min(qty, 20) } : l))));
+    setLines((ls) => (qty <= 0 ? ls.filter((l) => l.slug !== slug) : ls.map((l) => (l.slug === slug ? { ...l, qty: Math.min(qty, cap(l)) } : l))));
   }, []);
 
   const remove = useCallback((slug: string) => setLines((ls) => ls.filter((l) => l.slug !== slug)), []);

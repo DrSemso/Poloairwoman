@@ -51,6 +51,8 @@ export type ProductInput = {
   active: boolean;
   inStock: boolean;
   featured: boolean;
+  trackStock: boolean;
+  stock: number | null;
 };
 
 export async function saveProduct(input: ProductInput): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
@@ -63,6 +65,7 @@ export async function saveProduct(input: ProductInput): Promise<{ ok: true; id: 
   const regular = input.regularPrice ? Math.round(Number(input.regularPrice)) : null;
   if (regular !== null && regular <= price) return { ok: false, error: "Stara cena mora biti veća od nove (ili ostavi prazno)." };
   if (!input.images.length) return { ok: false, error: "Dodaj bar jednu sliku." };
+  const stock = input.trackStock ? Math.max(0, Math.floor(Number(input.stock) || 0)) : null;
 
   const row = {
     name,
@@ -74,6 +77,8 @@ export async function saveProduct(input: ProductInput): Promise<{ ok: true; id: 
     active: input.active,
     in_stock: input.inStock,
     featured: input.featured,
+    track_stock: input.trackStock,
+    stock,
     updated_at: new Date().toISOString(),
   };
 
@@ -107,6 +112,16 @@ export async function quickUpdate(id: number, patch: { in_stock?: boolean; activ
   if (error) throw new Error(error.message);
   refreshShop(data.slug);
   revalidatePath("/admin/proizvodi");
+}
+
+/** Novi redosled proizvoda (ids od prvog ka poslednjem). */
+export async function reorderProducts(ids: number[]) {
+  const { sb } = await requireAdmin();
+  const clean = ids.map(Number).filter((n) => Number.isFinite(n)).slice(0, 2000);
+  const { error } = await sb.rpc("reorder_products", { ids: clean });
+  if (error) throw new Error(error.message);
+  refreshShop();
+  revalidatePath("/admin/raspored");
 }
 
 export async function deleteProduct(id: number) {

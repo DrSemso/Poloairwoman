@@ -38,7 +38,7 @@ export default async function ProductPage({ params }: Props) {
   if (!p) notFound();
   const cat = getCategory(p.category)!;
   const pct = discountPct(p);
-  const item = { slug: p.slug, name: p.name, price: p.price, regularPrice: p.regularPrice, image: p.images[0] };
+  const item = { slug: p.slug, name: p.name, price: p.price, regularPrice: p.regularPrice, image: p.images[0], max: p.stock ?? null };
   const jewelry = JEWELRY.includes(p.category);
 
   const benefits = jewelry

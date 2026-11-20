@@ -24,7 +24,7 @@ async function toWebp(file: File): Promise<Blob> {
 export default function ProductForm({ categories, initial }: { categories: Cat[]; initial: ProductInput | null }) {
   const router = useRouter();
   const [f, setF] = useState<ProductInput>(
-    initial ?? { name: "", category: categories[0].slug, price: 0, regularPrice: null, description: "", images: [], active: true, inStock: true, featured: false },
+    initial ?? { name: "", category: categories[0].slug, price: 0, regularPrice: null, description: "", images: [], active: true, inStock: true, featured: false, trackStock: false, stock: null },
   );
   const [err, setErr] = useState("");
   const [uploading, setUploading] = useState(0);
@@ -107,10 +107,27 @@ export default function ProductForm({ categories, initial }: { categories: Cat[]
           <textarea id="desc" rows={10} value={f.description} onChange={(e) => set("description", e.target.value)} />
           <small className="muted">Novi red = novi pasus. Može i &lt;strong&gt;podebljano&lt;/strong&gt;.</small>
         </div>
-        <div className="adm-checks">
-          <label>
-            <input type="checkbox" checked={f.inStock} onChange={(e) => set("inStock", e.target.checked)} /> Na stanju
+        <div className="adm-stock">
+          <label className="adm-check">
+            <input type="checkbox" checked={f.trackStock} onChange={(e) => setF((s) => ({ ...s, trackStock: e.target.checked, stock: e.target.checked ? (s.stock ?? (s.inStock ? 1 : 0)) : s.stock }))} />{" "}
+            Upravljaj zalihama
           </label>
+          {f.trackStock ? (
+            <div className="field adm-stock-n">
+              <label htmlFor="stock">Komada na stanju</label>
+              <input id="stock" inputMode="numeric" value={f.stock ?? 0} onChange={(e) => set("stock", Number(e.target.value.replace(/\D/g, "")) || 0)} />
+              <small className="muted">Umanjuje se sam pri svakoj porudžbini. Na 0 proizvod postaje „Rasprodato“.</small>
+            </div>
+          ) : (
+            <small className="muted">Uključi ako želiš da sajt broji komade i sam označi proizvod kao rasprodat.</small>
+          )}
+        </div>
+        <div className="adm-checks">
+          {!f.trackStock && (
+            <label>
+              <input type="checkbox" checked={f.inStock} onChange={(e) => set("inStock", e.target.checked)} /> Na stanju
+            </label>
+          )}
           <label>
             <input type="checkbox" checked={f.active} onChange={(e) => set("active", e.target.checked)} /> Vidljiv u prodavnici
           </label>

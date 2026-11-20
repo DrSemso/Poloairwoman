@@ -8,6 +8,7 @@ const ITEMS = [
   { href: "/admin", label: "Pregled" },
   { href: "/admin/porudzbine", label: "Porudžbine" },
   { href: "/admin/proizvodi", label: "Proizvodi" },
+  { href: "/admin/raspored", label: "Raspored" },
   { href: "/admin/newsletter", label: "Newsletter" },
 ];
 

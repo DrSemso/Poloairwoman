@@ -19,6 +19,8 @@ type Row = {
   featured: boolean;
   rank: number;
   old_slug: string | null;
+  track_stock: boolean;
+  stock: number | null;
 };
 
 // Naslovne slike sa belom pozadinom (iz uvoza) — nove slike iz admina tretiramo kao bele
@@ -39,6 +41,7 @@ export function fromRow(r: Row): Product {
     rank: r.rank,
     inStock: r.in_stock,
     featured: r.featured,
+    stock: r.track_stock ? (r.stock ?? 0) : null,
     whiteCover: !!r.images?.length && !NOT_WHITE.has(r.images[0]),
   };
 }
@@ -53,7 +56,7 @@ async function load(): Promise<Product[]> {
   for (let from = 0; ; from += 1000) {
     const { data, error } = await sb
       .from("products")
-      .select("id,slug,name,category,price,regular_price,images,description,in_stock,featured,rank,old_slug")
+      .select("id,slug,name,category,price,regular_price,images,description,in_stock,featured,rank,old_slug,track_stock,stock")
       .eq("active", true)
       .order("rank")
       .range(from, from + 999);
@@ -74,7 +77,7 @@ function markNew(list: Product[]) {
 }
 
 /** Ceo aktivni katalog, keširan; admin ga osvežava preko revalidateTag. */
-export const getCatalog = unstable_cache(async () => markNew(await load()), ["catalog-v1"], { tags: [CATALOG_TAG], revalidate: 600 });
+export const getCatalog = unstable_cache(async () => markNew(await load()), ["catalog-v2"], { tags: [CATALOG_TAG], revalidate: 600 });
 
 export async function getProductBySlug(slug: string) {
   return (await getCatalog()).find((p) => p.slug === slug);

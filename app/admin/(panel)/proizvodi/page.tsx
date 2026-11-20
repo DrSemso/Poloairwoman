@@ -12,14 +12,14 @@ export default async function ProductsAdmin({ searchParams }: { searchParams: Pr
   const sp = await searchParams;
   const { sb } = await requireAdmin();
   const page = Math.max(1, parseInt(sp.strana || "1", 10) || 1);
-  let q = sb.from("products").select("id,slug,name,category,price,regular_price,images,active,in_stock,featured", { count: "exact" }).order("rank");
+  let q = sb.from("products").select("id,slug,name,category,price,regular_price,images,active,in_stock,featured,track_stock,stock", { count: "exact" }).order("rank");
   if (sp.kat) q = q.eq("category", sp.kat);
   if (sp.stanje === "rasprodato") q = q.eq("in_stock", false);
   if (sp.stanje === "skriveno") q = q.eq("active", false);
   if (sp.stanje === "izdvojeno") q = q.eq("featured", true);
   if (sp.q) q = q.ilike("name", `%${sp.q.replace(/[%,()]/g, " ").trim()}%`);
   const { data, count } = await q.range((page - 1) * PER, page * PER - 1);
-  const rows = (data ?? []) as Pick<ProductRow, "id" | "slug" | "name" | "category" | "price" | "regular_price" | "images" | "active" | "in_stock" | "featured">[];
+  const rows = (data ?? []) as Pick<ProductRow, "id" | "slug" | "name" | "category" | "price" | "regular_price" | "images" | "active" | "in_stock" | "featured" | "track_stock" | "stock">[];
   const pages = Math.max(1, Math.ceil((count ?? 0) / PER));
   const link = (o: Partial<SP>) => {
     const p = new URLSearchParams();
@@ -75,7 +75,7 @@ export default async function ProductsAdmin({ searchParams }: { searchParams: Pr
                   {p.regular_price ? <s> {rsd(p.regular_price)}</s> : null}
                 </span>
               </div>
-              <ProductToggles id={p.id} inStock={p.in_stock} active={p.active} featured={p.featured} />
+              <ProductToggles id={p.id} inStock={p.in_stock} active={p.active} featured={p.featured} stock={p.track_stock ? (p.stock ?? 0) : null} />
             </div>
           ))}
         </div>

@@ -11,13 +11,18 @@ const LABELS: { key: keyof Flags; db: "in_stock" | "active" | "featured"; on: st
   { key: "featured", db: "featured", on: "Izdvojen", off: "Izdvoji" },
 ];
 
-export default function ProductToggles({ id, ...init }: { id: number } & Flags) {
+export default function ProductToggles({ id, stock, ...init }: { id: number; stock?: number | null } & Flags) {
   const [f, setF] = useState<Flags>(init);
   const [pending, start] = useTransition();
   const [err, setErr] = useState(false);
   return (
     <div className="adm-toggles">
-      {LABELS.map((l) => (
+      {stock != null && (
+        <span className={`adm-tog adm-stock-pill${stock === 0 ? " warn" : stock <= 3 ? " low" : ""}`} title="Zalihe se prate">
+          {stock === 0 ? "Rasprodato" : `${stock} kom`}
+        </span>
+      )}
+      {LABELS.filter((l) => !(stock != null && l.key === "inStock")).map((l) => (
         <button
           key={l.key}
           type="button"

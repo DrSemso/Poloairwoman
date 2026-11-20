@@ -10,7 +10,7 @@ async function getSuggestions(): Promise<Suggestion[]> {
     .filter((p) => p.inStock && ["narukvice", "novcanici", "naocare"].includes(p.category))
     .sort((a, b) => a.price - b.price)
     .slice(0, 6)
-    .map((p) => ({ slug: p.slug, name: p.name, price: p.price, regularPrice: p.regularPrice, image: p.images[0] }));
+    .map((p) => ({ slug: p.slug, name: p.name, price: p.price, regularPrice: p.regularPrice, image: p.images[0], max: p.stock ?? null }));
 }
 
 

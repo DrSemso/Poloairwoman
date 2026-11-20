@@ -16,13 +16,15 @@ export type Product = {
   inStock: boolean;
   featured: boolean;
   isNew?: boolean;
+  /** Broj komada kad vlasnik prati zalihe; null = ne prati se. */
+  stock?: number | null;
 };
 
 /** Koliko najnovijih proizvoda nosi oznaku "Novo". */
 const NEW_COUNT = 24;
 
 export function newIds(all: Product[]) {
-  return new Set([...all].sort((a, b) => a.rank - b.rank).slice(0, NEW_COUNT).map((p) => p.id));
+  return new Set([...all].sort((a, b) => b.id - a.id).slice(0, NEW_COUNT).map((p) => p.id));
 }
 
 export function discountPct(p: Product) {
@@ -61,16 +63,13 @@ export function sortProducts(list: Product[], sort: SortKey) {
     case "cena-opadajuce":
       return l.sort((a, b) => b.price - a.price);
     case "najnovije":
-      return l.sort((a, b) => a.rank - b.rank);
+      return l.sort((a, b) => b.id - a.id);
     default:
-      // "Izdvajamo": na stanju, izdvojeni, slika na beloj pozadini, sniženi — pa najnoviji
-      return l.sort((a, b) => score(b) - score(a) || a.rank - b.rank);
+      // "Izdvajamo": raspored koji vlasnik podesi u adminu, rasprodato ide na kraj
+      return l.sort((a, b) => Number(b.inStock) - Number(a.inStock) || a.rank - b.rank);
   }
 }
 
-function score(p: Product) {
-  return (p.inStock ? 16 : 0) + (p.featured ? 8 : 0) + (p.whiteCover !== false ? 4 : 0) + (p.regularPrice ? 2 : 0) + (p.images.length >= 4 ? 1 : 0);
-}
 
 export function related(all: Product[], p: Product, n = 4): Product[] {
   const same = all.filter((x) => x.category === p.category && x.id !== p.id && x.inStock);
