@@ -16,6 +16,7 @@ export default async function ProductsAdmin({ searchParams }: { searchParams: Pr
   if (sp.kat) q = q.eq("category", sp.kat);
   if (sp.stanje === "rasprodato") q = q.eq("in_stock", false);
   if (sp.stanje === "skriveno") q = q.eq("active", false);
+  if (sp.stanje === "nacrti") q = q.eq("active", false).not("supplier_code", "is", null);
   if (sp.stanje === "izdvojeno") q = q.eq("featured", true);
   if (sp.q) q = q.ilike("name", `%${sp.q.replace(/[%,()]/g, " ").trim()}%`);
   const { data, count } = await q.range((page - 1) * PER, page * PER - 1);
@@ -53,6 +54,7 @@ export default async function ProductsAdmin({ searchParams }: { searchParams: Pr
           <option value="">Svi</option>
           <option value="rasprodato">Rasprodato</option>
           <option value="skriveno">Skriveno</option>
+          <option value="nacrti">Nacrti od dobavljača</option>
           <option value="izdvojeno">Izdvojeno</option>
         </select>
         <button className="btn btn-outline">Filtriraj</button>
