@@ -21,6 +21,10 @@ Zato se stranica čita u pregledaču u Claude aplikaciji na Fatihovom računaru,
    Nove su šifre kojih nema ni u jednom.
 4. Za svaku novu šifru otvori stranicu proizvoda i iz `script[type="application/ld+json"]` (ProductGroup) uzmi:
    `image.contentUrl` (slike), `additionalProperty` (osobine) i cenu (prikazana cena u TL).
+   Nova verzija stranice (`/pd/...`) nema ld+json: tada uzmi `img` tagove sa `cdn.dsmcdn.com/.../prod/`,
+   skini `mnresize/W/H/` iz putanje i zadrži samo slike iz istog foldera (datum/sat) kao prva slika.
+   Osobine su zajedničke za sve boje modela, pa boju i brojčanik uzmi iz naziva, ne iz osobina.
+   Šifre sa "x" na kraju (npr. PL-1621B6x) su isti model: skini "x".
 5. Napiši na srpskom (ekavica):
    - naziv u stilu sajta, npr. "Zlatni ženski sat sa cirkonima i ogrlicom", bez reči "Poloair" i bez šifre;
    - opis u HTML-u (`<p>…</p>`, i `<ul><li>` za osobine: materijal, prečnik kućišta, mehanizam, boja).
@@ -37,4 +41,5 @@ Zato se stranica čita u pregledaču u Claude aplikaciji na Fatihovom računaru,
 
 ## Postavljanje (jednom)
 - SQL: `supabase/supplier.sql`
+- Zakazani zadatak: ponedeljkom u 8:42 (Beograd), "Uvoz novih modela od dobavljača".
 - Edge funkcija: `supabase/functions/uvoz-slika` (verify_jwt isključen; proverava `x-import-secret`)

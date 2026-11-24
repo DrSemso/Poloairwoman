@@ -42,6 +42,7 @@ begin
   if exists (select 1 from public.products where supplier_code = code_) then
     return null;
   end if;
+  perform extensions.http_set_curlopt('CURLOPT_TIMEOUT_MS', '60000');
 
   resp := extensions.http_get('https://open.er-api.com/v6/latest/TRY');
   rate := ((resp.content::jsonb)->'rates'->>'RSD')::numeric;
